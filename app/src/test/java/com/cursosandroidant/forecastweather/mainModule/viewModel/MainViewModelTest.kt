@@ -3,6 +3,7 @@ package com.cursosandroidant.forecastweather.mainModule.viewModel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import com.cursosandroidant.forecastweather.MainCoroutineRule
+import com.cursosandroidant.forecastweather.common.dataAccess.JSONFileLoader
 import com.cursosandroidant.forecastweather.common.dataAccess.WeatherForecastService
 import com.cursosandroidant.forecastweather.entities.WeatherForecastEntity
 import com.cursosandroidant.historicalweatherref.getOrAwaitValue
@@ -121,6 +122,30 @@ class MainViewModelTest {
         val result = mainViewModel.getResult().getOrAwaitValue()
         assertThat(result?.hourly?.size, `is`(48))
 
+    }
+
+
+    //ESTE TEST COMPARA LA RESPUESTA QUE TENEMOS EN LOCAL,
+    //CON LA RESPUESTA RECIBIDA DESDE EL SERVICIO
+    //ESTO SIRVE PARA CASOS EN LOS CUALES EL BACKEND PUEDE ESTAR CAMBIANDO CONSTANTEMENTE
+    @Test
+    fun `check hourly size in remote with local test`(){
+        runBlocking {
+            //LLAMAMOS AL SERVICIO MEDIANTE RETROFIT
+            val remoteResult = service.getWeatherForecastByCoordinates(
+                19.4342, -99.1962, "d09b4c22cd9bac96aa35b48f0c5dbbc3",
+                "metric", "en"
+            )
+            //CARGAMOS EL RESULTADO LOCAL
+            val localResult = JSONFileLoader().loadWeatherForecastEntity("weather_forecast_response_success")
+
+            //POR REJEMPLO VALIDAMOS LA LONGITUD DE UN ARREGLO
+            assertThat(localResult?.hourly?.size, `is`(remoteResult.hourly.size))
+
+            //PODEMOS VALIDAR LA ZONA HORARIA
+            assertThat( localResult?.timezone, `is`(remoteResult.timezone))
+
+        }
     }
 
 }
